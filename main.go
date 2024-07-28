@@ -1,13 +1,15 @@
 package main
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/akumakumu/suiren/routes"
+	"github.com/gofiber/fiber/v3"
+)
 
 func main() {
 	app := fiber.New()
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello Mom!")
-	})
+	// Routes
+	routes.Router(app)
 
 	app.Listen(":3000")
 }
