@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/akumakumu/suiren/controllers"
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/routes"
 	"github.com/gofiber/fiber/v3"
@@ -16,10 +17,13 @@ func main() {
 		log.Fatalf("Failed Connect Database: %v", err)
 	}
 
+	db.AutoMigrate(&controllers.User{})
+	log.Printf("Database Migrated")
+
 	pgDB, err := db.DB()
 
 	if err != nil {
-		log.Fatalf("Failed Getting Database Connion: %v", err)
+		log.Fatalf("Failed Getting Database Connection: %v", err)
 	}
 
 	defer func() {
