@@ -83,3 +83,22 @@ func CreateUser(c fiber.Ctx) error {
 
 	return c.JSON(user)
 }
+
+func DeleteUser(c fiber.Ctx) error {
+	id := c.Params("id")
+	db := databases.SharedConnection()
+
+	var user User
+
+	db.First(&user, id)
+
+	if user.Username == "" {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "User w/ that id not found",
+		})
+	}
+
+	db.Delete(&user)
+
+	return c.JSON(user)
+}
