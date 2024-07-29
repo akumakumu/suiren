@@ -11,24 +11,39 @@ import (
 
 type User struct {
 	gorm.Model
-	Fullname  string
-	Username  string
-	Password  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Fullname  string    `json:"fullname"`
+	Username  string    `json:"username" gorm:"uniqueIndex"`
+	Password  string    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func GetUser(c fiber.Ctx) error {
-	db, err := databases.InitDatabase()
+	db := databases.SharedConnection()
 
-	if err != nil {
-		log.Fatalf("Failed Connect Database: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to Connect Database")
+	if db == nil {
+		log.Println("Database connection is nil")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database connection not initialized",
+		})
 	}
 
 	var users []User
 
-	db.Find(&users)
+	result := db.Find(&users)
+
+	if result.Error != nil {
+		log.Printf("Failed to fetch User: %v", result.Error)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to fetch user",
+		})
+	}
+
+	if len(users) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "No user found",
+		})
+	}
 
 	return c.JSON(users)
 }

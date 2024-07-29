@@ -12,10 +12,13 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func InitDatabase() (*gorm.DB, error) {
+var DB *gorm.DB
+
+func InitDatabase() error {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
+		return err
 	}
 
 	db_host := os.Getenv("DATABASE_HOST")
@@ -37,7 +40,19 @@ func InitDatabase() (*gorm.DB, error) {
 		},
 	)
 
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
+
+	if err != nil {
+		log.Printf("Failed to connect to database: %v", err)
+		return err
+	}
+
+	log.Printf("Database connection established successfully")
+	return nil
+}
+
+func SharedConnection() *gorm.DB {
+	return DB
 }

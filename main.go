@@ -11,16 +11,16 @@ import (
 
 func main() {
 	// Database Connection
-	db, err := databases.InitDatabase()
+	err := databases.InitDatabase()
 
 	if err != nil {
 		log.Fatalf("Failed Connect Database: %v", err)
 	}
 
-	db.AutoMigrate(&controllers.User{})
+	databases.DB.AutoMigrate(&controllers.User{})
 	log.Printf("Database Migrated")
 
-	pgDB, err := db.DB()
+	pgDB, err := databases.DB.DB()
 
 	if err != nil {
 		log.Fatalf("Failed Getting Database Connection: %v", err)
