@@ -15,6 +15,12 @@ type User struct {
 	Password string `json:"-"`
 }
 
+type CreateUserRequest struct {
+	Fullname string `json:"fullname"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func GetUser(c fiber.Ctx) error {
 	db := databases.SharedConnection()
 
@@ -73,15 +79,27 @@ func GetUserById(c fiber.Ctx) error {
 func CreateUser(c fiber.Ctx) error {
 	db := databases.SharedConnection()
 
-	var user User
+	var request CreateUserRequest
 
-	user.Fullname = "Nightingale Baldea"
-	user.Username = "nightingale"
-	user.Password = "unencrypted"
+	if err := c.Bind().Body(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Cannot parse JSON",
+		})
+	}
 
-	db.Create(&user)
+	user := User{
+		Fullname: request.Fullname,
+		Username: request.Username,
+		Password: request.Password,
+	}
 
-	return c.JSON(user)
+	if err := db.Create(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create user",
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
 func DeleteUser(c fiber.Ctx) error {
