@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"log"
-	"time"
 
 	"github.com/akumakumu/suiren/databases"
 	"github.com/gofiber/fiber/v3"
@@ -11,11 +10,9 @@ import (
 
 type User struct {
 	gorm.Model
-	Fullname  string    `json:"fullname"`
-	Username  string    `json:"username" gorm:"uniqueIndex"`
-	Password  string    `json:"-"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Fullname string `json:"fullname"`
+	Username string `json:"username" gorm:"uniqueIndex"`
+	Password string `json:"-"`
 }
 
 func GetUser(c fiber.Ctx) error {
@@ -46,4 +43,43 @@ func GetUser(c fiber.Ctx) error {
 	}
 
 	return c.JSON(users)
+}
+
+func GetUserById(c fiber.Ctx) error {
+	id := c.Params("id")
+	db := databases.SharedConnection()
+
+	if db == nil {
+		log.Println("Database connection is nil")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database connection not initialized",
+		})
+	}
+
+	var user User
+
+	result := db.Find(&user, id)
+
+	if result.Error != nil {
+		log.Printf("Failed to fetch User: %v", result.Error)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to fetch user",
+		})
+	}
+
+	return c.JSON(user)
+}
+
+func CreateUser(c fiber.Ctx) error {
+	db := databases.SharedConnection()
+
+	var user User
+
+	user.Fullname = "Nightingale Baldea"
+	user.Username = "nightingale"
+	user.Password = "unencrypted"
+
+	db.Create(&user)
+
+	return c.JSON(user)
 }
