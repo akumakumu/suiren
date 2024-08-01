@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/akumakumu/suiren/controllers"
 	"github.com/akumakumu/suiren/databases"
+	"github.com/akumakumu/suiren/models"
 	"github.com/akumakumu/suiren/routes"
 	"github.com/gofiber/fiber/v3"
 )
@@ -17,7 +17,7 @@ func main() {
 		log.Fatalf("Failed Connect Database: %v", err)
 	}
 
-	databases.DB.AutoMigrate(&controllers.User{})
+	databases.DB.AutoMigrate(&models.User{})
 	log.Printf("Database Migrated")
 
 	pgDB, err := databases.DB.DB()

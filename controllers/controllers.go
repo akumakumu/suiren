@@ -4,22 +4,9 @@ import (
 	"log"
 
 	"github.com/akumakumu/suiren/databases"
+	"github.com/akumakumu/suiren/models"
 	"github.com/gofiber/fiber/v3"
-	"gorm.io/gorm"
 )
-
-type User struct {
-	gorm.Model
-	Fullname string `json:"fullname"`
-	Username string `json:"username" gorm:"uniqueIndex"`
-	Password string `json:"-"`
-}
-
-type CreateUserRequest struct {
-	Fullname string `json:"fullname"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 func GetUser(c fiber.Ctx) error {
 	db := databases.SharedConnection()
@@ -31,7 +18,7 @@ func GetUser(c fiber.Ctx) error {
 		})
 	}
 
-	var users []User
+	var users []models.User
 
 	result := db.Find(&users)
 
@@ -62,7 +49,7 @@ func GetUserById(c fiber.Ctx) error {
 		})
 	}
 
-	var user User
+	var user models.User
 
 	result := db.Find(&user, id)
 
@@ -79,7 +66,7 @@ func GetUserById(c fiber.Ctx) error {
 func CreateUser(c fiber.Ctx) error {
 	db := databases.SharedConnection()
 
-	var request CreateUserRequest
+	var request models.CreateUserRequest
 
 	if err := c.Bind().Body(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -87,7 +74,7 @@ func CreateUser(c fiber.Ctx) error {
 		})
 	}
 
-	user := User{
+	user := models.User{
 		Fullname: request.Fullname,
 		Username: request.Username,
 		Password: request.Password,
@@ -106,7 +93,7 @@ func DeleteUser(c fiber.Ctx) error {
 	id := c.Params("id")
 	db := databases.SharedConnection()
 
-	var user User
+	var user models.User
 
 	db.First(&user, id)
 
