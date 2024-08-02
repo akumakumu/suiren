@@ -170,3 +170,14 @@ func Login(c fiber.Ctx) error {
 		"token":   t,
 	})
 }
+
+func Accessible(c fiber.Ctx) error {
+	return c.SendString("Accessible")
+}
+
+func Restricted(c fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["username"].(string)
+	return c.SendString("Welcome " + name)
+}

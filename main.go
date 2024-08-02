@@ -34,7 +34,6 @@ func main() {
 
 	app := fiber.New()
 
-	// Routes
 	routes.Router(app)
 
 	app.Listen(":3000")
