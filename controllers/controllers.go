@@ -3,11 +3,13 @@ package controllers
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
 	"github.com/akumakumu/suiren/utils"
 	"github.com/gofiber/fiber/v3"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -145,15 +147,26 @@ func Login(c fiber.Ctx) error {
 	}
 
 	if !utils.CheckPasswordHash(request.Password, user.Password) {
-		log.Printf("plain: %s, hashed: %s", request.Password, user.Password)
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid password",
 		})
 	}
 
-	log.Printf("plain: %s, hashed: %s", request.Password, user.Password)
+	claims := jwt.MapClaims{
+		"name":  user.Fullname,
+		"admin": true,
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
 
 	return c.JSON(fiber.Map{
 		"message": "Login Success",
+		"token":   t,
 	})
 }
