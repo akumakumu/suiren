@@ -5,6 +5,7 @@ import (
 
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
+	"github.com/akumakumu/suiren/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -74,10 +75,12 @@ func CreateUser(c fiber.Ctx) error {
 		})
 	}
 
+	hashedPassword, _ := utils.HashPassword(request.Password)
+
 	user := models.User{
 		Fullname: request.Fullname,
 		Username: request.Username,
-		Password: request.Password,
+		Password: hashedPassword,
 	}
 
 	if err := db.Create(&user).Error; err != nil {
