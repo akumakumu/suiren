@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"log"
 
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
 	"github.com/akumakumu/suiren/utils"
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 func GetUser(c fiber.Ctx) error {
@@ -109,4 +111,49 @@ func DeleteUser(c fiber.Ctx) error {
 	db.Delete(&user)
 
 	return c.JSON(user)
+}
+
+func Login(c fiber.Ctx) error {
+	db := databases.SharedConnection()
+
+	if db == nil {
+		log.Println("Database connection is nil")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database connection not initialized",
+		})
+	}
+
+	var request models.LoginRequest
+	var user models.User
+
+	if err := c.Bind().Body(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Cannot parse JSON",
+		})
+	}
+
+	// For Debugging
+	log.Printf("Parsed request: %+v", request)
+
+	result := db.Where("username = ?", request.Username).First(&user)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
+	}
+
+	if !utils.CheckPasswordHash(request.Password, user.Password) {
+		log.Printf("plain: %s, hashed: %s", request.Password, user.Password)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid password",
+		})
+	}
+
+	log.Printf("plain: %s, hashed: %s", request.Password, user.Password)
+
+	return c.JSON(fiber.Map{
+		"message": "Login Success",
+	})
 }

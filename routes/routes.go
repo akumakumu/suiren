@@ -6,6 +6,10 @@ import (
 )
 
 func Router(app *fiber.App) {
+	// Login
+	app.Post("/login", controllers.Login)
+
+	// Public Routes
 	app.Get("/user", controllers.GetUser)
 	app.Post("/user", controllers.CreateUser)
 	app.Get("/user/:id", controllers.GetUserById)
