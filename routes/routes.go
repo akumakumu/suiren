@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/akumakumu/suiren/controllers"
+	"github.com/akumakumu/suiren/handlers"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -24,17 +24,22 @@ func Router(app *fiber.App) {
 	}
 
 	// Login
-	app.Post("/login", controllers.Login)
+	app.Post("/login", handlers.Login)
 
 	// Restricted
 	app.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
 	}))
 
-	app.Get("/user", controllers.GetUser)
-	app.Post("/user", controllers.CreateUser)
-	app.Get("/user/:id", controllers.GetUserById)
-	app.Delete("/user/:id", controllers.DeleteUser)
+	app.Get("/user", handlers.GetUser)
+	app.Post("/user", handlers.CreateUser)
+	app.Get("/user/:id", handlers.GetUserById)
+	app.Delete("/user/:id", handlers.DeleteUser)
 
-	app.Get("/restricted", controllers.Restricted)
+	// Example of only using jwt middleware on one route
+	// app.Get("/restricted", jwtware.New(jwtware.Config{
+	// 	SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
+	// }), controllers.Restricted)
+
+	app.Get("/restricted", handlers.Restricted)
 }
