@@ -1,5 +1,8 @@
 # Suiren
 
+### Stack :
+`Go Fiber` `GORM` `PostgreSQL`
+
 ## Installation
 
 ```bash
