@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"log"
-	"time"
 
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
@@ -152,22 +151,16 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	claims := jwt.MapClaims{
-		"username": user.Username,
-		"admin":    true,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	t, err := token.SignedString([]byte("secret"))
+	token, err := utils.GenerateJWT(user.Username)
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate token",
+		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "Login Success",
-		"token":   t,
+		"token":   token,
 	})
 }
 
@@ -176,20 +169,15 @@ func Accessible(c *fiber.Ctx) error {
 }
 
 func Restricted(c *fiber.Ctx) error {
-	user := c.Locals("user")
-	if user == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Missing or invalid JWT token",
-		})
-	}
-
-	token, ok := user.(*jwt.Token)
+	// Retrieve user from context
+	token, ok := c.Locals("user").(*jwt.Token)
 	if !ok {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to parse JWT token",
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid JWT token",
 		})
 	}
 
+	// Parse claims from token
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -197,12 +185,14 @@ func Restricted(c *fiber.Ctx) error {
 		})
 	}
 
-	name, ok := claims["username"].(string)
+	// Retrieve username from claims
+	username, ok := claims["username"].(string)
 	if !ok {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Username claim not found or invalid",
 		})
 	}
 
-	return c.SendString("Welcome " + name)
+	// Respond with a welcome message
+	return c.SendString("Welcome " + username)
 }
