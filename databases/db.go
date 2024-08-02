@@ -16,6 +16,7 @@ var DB *gorm.DB
 
 func InitDatabase() error {
 	err := godotenv.Load()
+
 	if err != nil {
 		log.Fatal("Error loading .env file")
 		return err
@@ -36,7 +37,7 @@ func InitDatabase() error {
 			LogLevel:                  logger.Info, // Log level
 			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
 			ParameterizedQueries:      true,        // Don't include params in the SQL log
-			Colorful:                  false,       // Disable color
+			Colorful:                  true,        // Disable color
 		},
 	)
 

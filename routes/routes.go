@@ -26,20 +26,21 @@ func Router(app *fiber.App) {
 	// Login
 	app.Post("/login", handlers.Login)
 
-	// Restricted
-	app.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
-	}))
+	// Restricted all routes after this
+	// app.Use(jwtware.New(jwtware.Config{
+	// 	SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
+	// }))
 
 	app.Get("/user", handlers.GetUser)
 	app.Post("/user", handlers.CreateUser)
 	app.Get("/user/:id", handlers.GetUserById)
 	app.Delete("/user/:id", handlers.DeleteUser)
 
-	// Example of only using jwt middleware on one route
-	// app.Get("/restricted", jwtware.New(jwtware.Config{
-	// 	SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
-	// }), controllers.Restricted)
+	// app.Get("/restricted", handlers.Restricted)
 
-	app.Get("/restricted", handlers.Restricted)
+	// Example of only using jwt middleware on one route
+	app.Get("/restricted", jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
+	}), handlers.Restricted)
+
 }
