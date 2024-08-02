@@ -8,12 +8,12 @@ import (
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
 	"github.com/akumakumu/suiren/utils"
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
-func GetUser(c fiber.Ctx) error {
+func GetUser(c *fiber.Ctx) error {
 	db := databases.SharedConnection()
 
 	if db == nil {
@@ -43,7 +43,7 @@ func GetUser(c fiber.Ctx) error {
 	return c.JSON(users)
 }
 
-func GetUserById(c fiber.Ctx) error {
+func GetUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := databases.SharedConnection()
 
@@ -68,12 +68,12 @@ func GetUserById(c fiber.Ctx) error {
 	return c.JSON(user)
 }
 
-func CreateUser(c fiber.Ctx) error {
+func CreateUser(c *fiber.Ctx) error {
 	db := databases.SharedConnection()
 
 	var request models.CreateUserRequest
 
-	if err := c.Bind().Body(&request); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot parse JSON",
 		})
@@ -96,7 +96,7 @@ func CreateUser(c fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
-func DeleteUser(c fiber.Ctx) error {
+func DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	db := databases.SharedConnection()
 
@@ -115,7 +115,7 @@ func DeleteUser(c fiber.Ctx) error {
 	return c.JSON(user)
 }
 
-func Login(c fiber.Ctx) error {
+func Login(c *fiber.Ctx) error {
 	db := databases.SharedConnection()
 
 	if db == nil {
@@ -128,7 +128,7 @@ func Login(c fiber.Ctx) error {
 	var request models.LoginRequest
 	var user models.User
 
-	if err := c.Bind().Body(&request); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot parse JSON",
 		})
@@ -153,9 +153,9 @@ func Login(c fiber.Ctx) error {
 	}
 
 	claims := jwt.MapClaims{
-		"name":  user.Fullname,
-		"admin": true,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		"username": user.Username,
+		"admin":    true,
+		"exp":      time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -171,13 +171,38 @@ func Login(c fiber.Ctx) error {
 	})
 }
 
-func Accessible(c fiber.Ctx) error {
+func Accessible(c *fiber.Ctx) error {
 	return c.SendString("Accessible")
 }
 
-func Restricted(c fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	name := claims["username"].(string)
+func Restricted(c *fiber.Ctx) error {
+	user := c.Locals("user")
+	if user == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Missing or invalid JWT token",
+		})
+	}
+
+	token, ok := user.(*jwt.Token)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to parse JWT token",
+		})
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to parse JWT claims",
+		})
+	}
+
+	name, ok := claims["username"].(string)
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Username claim not found or invalid",
+		})
+	}
+
 	return c.SendString("Welcome " + name)
 }

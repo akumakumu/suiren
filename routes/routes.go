@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/akumakumu/suiren/controllers"
 	jwtware "github.com/gofiber/contrib/jwt"
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 func Router(app *fiber.App) {

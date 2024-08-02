@@ -6,7 +6,7 @@ import (
 	"github.com/akumakumu/suiren/databases"
 	"github.com/akumakumu/suiren/models"
 	"github.com/akumakumu/suiren/routes"
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
